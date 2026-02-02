@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser
+from accounts.models import *
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -37,3 +37,54 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+    
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id',
+            'email',
+            'username',
+            'first_name',
+            'last_name',
+            'gender',
+            'phone',
+        ]
+        read_only_fields = ['id', 'email']  # usually don't let user change email easily
+
+    def validate_phone(self, value):
+        if value and not value.isdigit():
+            raise serializers.ValidationError("Phone number must contain only digits.")
+        return value
+
+
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = [
+            'id',
+            'address_type',
+            'full_name',
+            'phone',
+            'alternate_phone',
+            'pincode',
+            'locality',
+            'city',
+            'state',
+            'landmark',
+            'is_default',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate(self, data):
+        # Optional: enforce at least one default address logic here if needed
+        return data
+
+
+class AddressCreateUpdateSerializer(AddressSerializer):
+    """Used for create/update — can be more strict or relaxed"""
+    pass

@@ -11,7 +11,7 @@ def redirect_to_custom_admin_login(request):
 
 urlpatterns = [
     path('', include('accounts.urls')),  
-    path('api/auth/', include('accounts.urls')),  
+    path('api/accounts/', include('accounts.api.urls')),  
 
     path('', include('products.urls')),
     path('api/products/',include('products.api.urls')),
