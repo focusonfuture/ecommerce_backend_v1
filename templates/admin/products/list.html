@@ -2,234 +2,334 @@
 {% load i18n %}
 {% load form_extras %}
 
-{% block content %}
+{% block breadcrumb %}Products{% endblock %}
 
-<!-- ================= STYLES ================= -->
+{% block content %}
 <style>
-@keyframes fadeSlide {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-slide {
-    animation: fadeSlide .45s cubic-bezier(.4,0,.2,1) both;
-}
-.card-hover {
-    transition: all .25s ease;
-}
-.card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 14px 30px -12px rgba(0,0,0,.15);
-}
+    /* ── all colours/fonts inherit from base.html ── */
+
+    .pg-header {
+        display:flex; align-items:center; justify-content:space-between;
+        flex-wrap:wrap; gap:14px; margin-bottom:24px;
+        opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) 0s forwards;
+    }
+    .pg-icon {
+        width:46px; height:46px; border-radius:14px; font-size:20px; flex-shrink:0;
+        background:linear-gradient(135deg,rgba(79,110,247,.18),rgba(124,58,237,.1));
+        border:1px solid rgba(79,110,247,.25);
+        display:flex; align-items:center; justify-content:center;
+    }
+    .pg-title { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:#E8EAEF; letter-spacing:-.3px; }
+    .pg-sub   { font-size:13px; color:#4A5168; margin-top:2px; }
+
+    .btn-new {
+        display:inline-flex; align-items:center; gap:8px;
+        height:42px; padding:0 20px; border-radius:11px; text-decoration:none;
+        background:linear-gradient(135deg,#4F6EF7,#7C3AED); color:#fff;
+        font-family:'Syne',sans-serif; font-size:13px; font-weight:700;
+        box-shadow:0 6px 18px rgba(79,110,247,.28);
+        transition:transform .22s,box-shadow .22s;
+    }
+    .btn-new:hover { transform:translateY(-2px); box-shadow:0 10px 26px rgba(79,110,247,.38); }
+
+    /* stats */
+    .stats-row {
+        display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px;
+        opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .08s forwards;
+    }
+    @media(max-width:640px){ .stats-row { grid-template-columns:1fr; } }
+    .stat-chip { background:#141820; border:1px solid #1E2330; border-radius:16px; padding:18px 22px; transition:border-color .2s; }
+    .stat-chip:hover { border-color:#252B3A; }
+    .sc-lbl { font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:#4A5168; margin-bottom:8px; }
+    .sc-val { font-family:'Syne',sans-serif; font-size:26px; font-weight:700; color:#E8EAEF; }
+    .sc-val.teal { color:#0DCCB1; }
+    .sc-tip { font-size:12px; color:#4F6EF7; line-height:1.55; margin-top:6px; }
+
+    /* filter bar */
+    .filter-bar {
+        background:#141820; border:1px solid #1E2330; border-radius:16px;
+        padding:14px 18px; display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+        margin-bottom:20px;
+        opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .16s forwards;
+    }
+    .fi-search { position:relative; flex:1; min-width:180px; }
+    .fi-search i { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#3A4157; font-size:12px; pointer-events:none; }
+    .fi-input {
+        width:100%; height:40px; background:#0D1017; border:1px solid #1E2330;
+        border-radius:10px; padding:0 14px 0 36px;
+        font-family:'DM Sans',sans-serif; font-size:13px; color:#E8EAEF; outline:none;
+        transition:border-color .2s,box-shadow .2s;
+    }
+    .fi-input::placeholder { color:#3A4157; }
+    .fi-input:focus { border-color:#4F6EF7; box-shadow:0 0 0 3px rgba(79,110,247,.1); background:#111620; }
+    .fi-sel-wrap { position:relative; }
+    .fi-sel-wrap::after { content:'▾'; position:absolute; right:10px; top:50%; transform:translateY(-50%); color:#4A5168; font-size:11px; pointer-events:none; }
+    .fi-select {
+        height:40px; padding:0 28px 0 12px; -webkit-appearance:none;
+        background:#0D1017; border:1px solid #1E2330; border-radius:10px;
+        font-family:'DM Sans',sans-serif; font-size:13px; color:#E8EAEF; outline:none; cursor:pointer;
+        transition:border-color .2s;
+    }
+    .fi-select:focus { border-color:#4F6EF7; box-shadow:0 0 0 3px rgba(79,110,247,.1); }
+    .fi-select option { background:#0D1017; }
+    .fi-btn {
+        height:40px; padding:0 16px; border-radius:10px; border:none;
+        font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:.2s;
+    }
+    .fi-btn.apply { background:#4F6EF7; color:#fff; }
+    .fi-btn.apply:hover { background:#3d5ce5; }
+    .fi-btn.reset { background:#0D1017; border:1px solid #1E2330; color:#8B92A8; text-decoration:none; display:inline-flex; align-items:center; }
+    .fi-btn.reset:hover { background:#141820; color:#E8EAEF; }
+
+    /* table */
+    .tbl-card {
+        background:#141820; border:1px solid #1E2330; border-radius:18px;
+        overflow:hidden; margin-bottom:20px;
+        opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .24s forwards;
+    }
+    .tbl-scroll { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; }
+    thead tr { background:#0D1017; border-bottom:1px solid #1E2330; }
+    th { padding:13px 18px; text-align:left; white-space:nowrap; font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:#4A5168; }
+    th.c { text-align:center; }
+    tbody tr { border-bottom:1px solid #111520; transition:background .15s; }
+    tbody tr:last-child { border-bottom:none; }
+    tbody tr:hover { background:rgba(79,110,247,.03); }
+    tbody tr.dim { opacity:.42; }
+    td { padding:14px 18px; font-size:13px; color:#C4C9D8; vertical-align:middle; }
+    td.c { text-align:center; }
+
+    /* product name cell */
+    .prod-name { font-weight:600; color:#E8EAEF; font-size:14px; }
+
+    /* category / brand pills */
+    .meta-pill { display:inline-flex; align-items:center; font-size:12px; color:#8B92A8; background:#0D1017; border:1px solid #1E2330; padding:3px 10px; border-radius:20px; }
+
+    /* variant count badge */
+    .var-badge {
+        display:inline-flex; align-items:center; justify-content:center;
+        font-family:'Syne',sans-serif; font-size:12px; font-weight:700;
+        min-width:28px; height:24px; padding:0 8px; border-radius:8px;
+        background:rgba(79,110,247,.1); border:1px solid rgba(79,110,247,.2); color:#4F6EF7;
+    }
+    .var-badge.zero { background:rgba(244,63,94,.08); border-color:rgba(244,63,94,.2); color:#F43F5E; }
+
+    /* toggles */
+    .tog { display:inline-flex; align-items:center; width:42px; height:24px; border-radius:12px; padding:3px; border:none; cursor:pointer; transition:background .25s; background:#1E2330; }
+    .tog .dot { width:18px; height:18px; border-radius:9px; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.4); transition:transform .25s cubic-bezier(.16,1,.3,1); }
+    .tog.t-on { background:#0DCCB1; }
+    .tog.b-on { background:#4F6EF7; }
+    .tog.t-on .dot, .tog.b-on .dot { transform:translateX(18px); }
+
+    /* actions */
+    .act-row { display:flex; align-items:center; justify-content:center; gap:6px; }
+    .act { height:32px; padding:0 10px; border-radius:8px; border:1px solid transparent; font-size:13px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:4px; transition:.2s; }
+    .act.edit  { background:#1E2330; border-color:#252B3A; color:#C4C9D8; }
+    .act.edit:hover  { background:#252B3A; color:#E8EAEF; border-color:#4F6EF7; }
+    .act.vars  { background:rgba(124,58,237,.1); border-color:rgba(124,58,237,.2); color:#A78BFA; }
+    .act.vars:hover  { background:rgba(124,58,237,.2); border-color:#7C3AED; }
+    .act.del   { background:rgba(244,63,94,.08); border-color:rgba(244,63,94,.2); color:#F43F5E; }
+    .act.del:hover   { background:rgba(244,63,94,.16); border-color:#F43F5E; }
+
+    .empty-state { text-align:center; padding:60px 20px; color:#4A5168; }
+    .empty-state .ei { font-size:42px; margin-bottom:14px; opacity:.45; }
+    .empty-state a { color:#4F6EF7; text-decoration:none; }
+
+    /* pagination */
+    .pager { display:flex; align-items:center; justify-content:center; gap:6px; opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .32s forwards; }
+    .pg-btn { height:36px; min-width:36px; padding:0 14px; border-radius:9px; font-size:13px; font-weight:500; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; background:#141820; border:1px solid #1E2330; color:#8B92A8; transition:.2s; }
+    .pg-btn:hover { background:#1E2330; color:#E8EAEF; }
+    .pg-btn.cur { background:linear-gradient(135deg,#4F6EF7,#7C3AED); border-color:transparent; color:#fff; font-family:'Syne',sans-serif; }
 </style>
 
-<div class="min-h-screen bg-slate-50 p-4 sm:p-6 space-y-8 animate-fade-slide">
-
-    <!-- ================= HEADER ================= -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+<!-- Header -->
+<div class="pg-header">
+    <div style="display:flex;align-items:center;gap:14px;">
+        <div class="pg-icon">📦</div>
         <div>
-            <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">
-                {{ title }}
-            </h1>
-            <p class="text-sm text-slate-500 mt-1">
-                {% trans "Manage products and their variants" %}
-            </p>
-        </div>
-
-        <a href="{% url 'dashboard:product_create' %}"
-           class="inline-flex items-center gap-2 px-6 py-3
-                  bg-gradient-to-r from-teal-600 to-emerald-600
-                  hover:from-teal-700 hover:to-emerald-700
-                  text-white rounded-xl shadow-md transition
-                  hover:-translate-y-0.5 hover:shadow-lg">
-            <span class="text-lg">＋</span>
-            {% trans "New Product" %}
-        </a>
-    </div>
-
-    <!-- ================= STATS ================= -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div class="bg-white rounded-2xl p-5 shadow-sm card-hover">
-            <p class="text-sm text-slate-500">{% trans "Total Products" %}</p>
-            <p class="text-3xl font-semibold text-slate-800">{{ total_count }}</p>
-        </div>
-
-        <div class="bg-white rounded-2xl p-5 shadow-sm card-hover">
-            <p class="text-sm text-slate-500">{% trans "Active Products" %}</p>
-            <p class="text-3xl font-semibold text-emerald-600">{{ active_count }}</p>
-        </div>
-
-        <div class="bg-emerald-50 rounded-2xl p-5 border border-emerald-100">
-            <p class="text-sm font-medium text-emerald-700">{% trans "Tip" %}</p>
-            <p class="text-sm text-emerald-800 mt-1">
-                {% trans "Products require at least one active variant" %}
-            </p>
+            <div class="pg-title">{{ title|default:"Products" }}</div>
+            <div class="pg-sub">Manage products and their variants</div>
         </div>
     </div>
+    <a href="{% url 'dashboard:product_create' %}" class="btn-new">＋ New Product</a>
+</div>
 
-    <!-- ================= FILTERS ================= -->
-    <form method="get"
-          class="grid grid-cols-1 lg:grid-cols-5 gap-3
-                 bg-white rounded-2xl p-4 shadow-sm card-hover">
+<!-- Stats -->
+<div class="stats-row">
+    <div class="stat-chip">
+        <div class="sc-lbl">Total Products</div>
+        <div class="sc-val">{{ total_count }}</div>
+    </div>
+    <div class="stat-chip">
+        <div class="sc-lbl">Active</div>
+        <div class="sc-val teal">{{ active_count }}</div>
+    </div>
+    <div class="stat-chip">
+        <div class="sc-lbl">💡 Tip</div>
+        <div class="sc-tip">Products require at least one active variant to appear in the storefront.</div>
+    </div>
+</div>
 
-        <input type="text" name="search" value="{{ search_query }}"
-               placeholder="{% trans 'Search product…' %}"
-               class="lg:col-span-2 px-4 py-2.5 rounded-xl border">
-
-        <select name="is_active" class="px-4 py-2.5 rounded-xl border">
-            <option value="">{% trans "Status" %}</option>
-            <option value="1" {% if filter_is_active == "1" %}selected{% endif %}>{% trans "Active" %}</option>
-            <option value="0" {% if filter_is_active == "0" %}selected{% endif %}>{% trans "Inactive" %}</option>
-        </select>
-
-        <select name="is_featured" class="px-4 py-2.5 rounded-xl border">
-            <option value="">{% trans "Featured" %}</option>
-            <option value="1" {% if filter_is_featured == "1" %}selected{% endif %}>{% trans "Yes" %}</option>
-            <option value="0" {% if filter_is_featured == "0" %}selected{% endif %}>{% trans "No" %}</option>
-        </select>
-
-        <div class="flex gap-2">
-            <button class="flex-1 px-5 py-2.5 rounded-xl bg-teal-600 text-white">
-                {% trans "Apply" %}
-            </button>
-            <a href="{% url 'dashboard:product_list' %}"
-               class="flex-1 px-5 py-2.5 rounded-xl bg-slate-100 text-center">
-                {% trans "Reset" %}
-            </a>
+<!-- Filters -->
+<form method="get">
+    <div class="filter-bar">
+        <div class="fi-search">
+            <i class="fas fa-search"></i>
+            <input type="text" name="search" value="{{ search_query }}"
+                   placeholder="Search products…" class="fi-input">
         </div>
-    </form>
+        <div class="fi-sel-wrap">
+            <select name="is_active" class="fi-select">
+                <option value="">All Status</option>
+                <option value="1" {% if filter_is_active == "1" %}selected{% endif %}>Active</option>
+                <option value="0" {% if filter_is_active == "0" %}selected{% endif %}>Inactive</option>
+            </select>
+        </div>
+        <div class="fi-sel-wrap">
+            <select name="is_featured" class="fi-select">
+                <option value="">All Featured</option>
+                <option value="1" {% if filter_is_featured == "1" %}selected{% endif %}>Featured</option>
+                <option value="0" {% if filter_is_featured == "0" %}selected{% endif %}>Standard</option>
+            </select>
+        </div>
+        <button type="submit" class="fi-btn apply">Apply</button>
+        <a href="{% url 'dashboard:product_list' %}" class="fi-btn reset">Reset</a>
+    </div>
+</form>
 
-    <!-- ================= TABLE ================= -->
-    <div class="bg-white rounded-2xl shadow-sm overflow-x-auto">
-        <table class="min-w-full text-sm">
-            <thead class="bg-slate-100 text-slate-600">
+<!-- Table -->
+<div class="tbl-card">
+    <div class="tbl-scroll">
+        <table>
+            <thead>
                 <tr>
-                    <th class="px-4 py-3 text-left">{% trans "Product" %}</th>
-                    <th class="px-4 py-3 text-left">{% trans "Category" %}</th>
-                    <th class="px-4 py-3 text-left">{% trans "Brand" %}</th>
-                    <th class="px-4 py-3 text-center">{% trans "Variants" %}</th>
-                    <th class="px-4 py-3 text-center">{% trans "Active" %}</th>
-                    <th class="px-4 py-3 text-center">{% trans "Featured" %}</th>
-                    <th class="px-4 py-3 text-center">{% trans "Actions" %}</th>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Brand</th>
+                    <th class="c">Variants</th>
+                    <th class="c">Active</th>
+                    <th class="c">Featured</th>
+                    <th class="c">Actions</th>
                 </tr>
             </thead>
-
-            <tbody class="divide-y">
+            <tbody>
             {% for product in products %}
-                <tr class="hover:bg-teal-50/40 {% if not product.is_active %}opacity-60{% endif %}">
-
-                    <td class="px-4 py-3 font-medium">{{ product.name }}</td>
-                    <td class="px-4 py-3">{{ product.category.name }}</td>
-                    <td class="px-4 py-3">{{ product.brand.name|default:"—" }}</td>
-
-                    <td class="px-4 py-3 text-center font-semibold">
-                        {{ product.variant_count }}
+                <tr {% if not product.is_active %}class="dim"{% endif %}>
+                    <td><span class="prod-name">{{ product.name }}</span></td>
+                    <td>
+                        {% if product.category %}<span class="meta-pill">{{ product.category.name }}</span>{% else %}—{% endif %}
                     </td>
-
-                    <!-- ACTIVE TOGGLE -->
-                    <td class="px-4 py-3 text-center">
+                    <td>
+                        {% if product.brand %}<span class="meta-pill">{{ product.brand.name }}</span>{% else %}—{% endif %}
+                    </td>
+                    <td class="c">
+                        <span class="var-badge {% if product.variant_count == 0 %}zero{% endif %}">
+                            {{ product.variant_count }}
+                        </span>
+                    </td>
+                    <!-- Active toggle -->
+                    <td class="c">
                         <button type="button"
                                 data-id="{{ product.id }}"
                                 data-active="{{ product.is_active|yesno:'true,false' }}"
-                                onclick="toggleProduct(this, 'status')"
-                                class="relative inline-flex h-6 w-11 items-center rounded-full
-                                {{ product.is_active|yesno:'bg-emerald-500,bg-slate-300' }}">
-                            <span class="inline-block h-4 w-4 bg-white rounded-full shadow
-                            {{ product.is_active|yesno:'translate-x-6,translate-x-1' }}"></span>
+                                onclick="toggleProduct(this,'status')"
+                                class="tog {% if product.is_active %}t-on{% endif %}">
+                            <div class="dot"></div>
                         </button>
                     </td>
-
-                    <!-- FEATURED TOGGLE -->
-                    <td class="px-4 py-3 text-center">
+                    <!-- Featured toggle -->
+                    <td class="c">
                         <button type="button"
                                 data-id="{{ product.id }}"
                                 data-active="{{ product.is_featured|yesno:'true,false' }}"
-                                onclick="toggleProduct(this, 'featured')"
-                                class="relative inline-flex h-6 w-11 items-center rounded-full
-                                {{ product.is_featured|yesno:'bg-teal-500,bg-slate-300' }}">
-                            <span class="inline-block h-4 w-4 bg-white rounded-full shadow
-                            {{ product.is_featured|yesno:'translate-x-6,translate-x-1' }}"></span>
+                                onclick="toggleProduct(this,'featured')"
+                                class="tog {% if product.is_featured %}b-on{% endif %}">
+                            <div class="dot"></div>
                         </button>
                     </td>
-
-                    <!-- ACTIONS -->
-                    <td class="px-4 py-3 text-center">
-                        <div class="flex justify-center gap-2">
-                            <a href="{% url 'dashboard:product_edit' product.slug %}"
-                               class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200">
-                                ✏️
-                            </a>
-
-                            <a href="{% url 'dashboard:product_variant_list' product.slug %}"
-                               class="px-3 py-1.5 rounded-lg bg-indigo-100 hover:bg-indigo-200">
-                                🧬
-                            </a>
-
+                    <!-- Actions -->
+                    <td class="c">
+                        <div class="act-row">
+                            <a href="{% url 'dashboard:product_edit' product.slug %}" class="act edit" title="Edit">✏️</a>
+                            <a href="{% url 'dashboard:product_variant_list' product.slug %}" class="act vars" title="Variants">🧬 Variants</a>
                             {% if not product.is_active %}
-                            <button onclick="confirmDelete('{{ product.slug }}')"
-                                    class="px-3 py-1.5 rounded-lg bg-red-600 text-white">
-                                🗑
-                            </button>
+                            <button onclick="confirmDelete('{{ product.slug }}')" class="act del" title="Delete">🗑</button>
                             {% endif %}
                         </div>
                     </td>
                 </tr>
             {% empty %}
-                <tr>
-                    <td colspan="7" class="py-16 text-center text-slate-500">
-                        {% trans "No products found" %}
-                    </td>
-                </tr>
+                <tr><td colspan="7">
+                    <div class="empty-state">
+                        <div class="ei">📦</div>
+                        <p>No products found. <a href="{% url 'dashboard:product_create' %}">Create your first product →</a></p>
+                    </div>
+                </td></tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
-
-    <!-- ================= PAGINATION ================= -->
-    {% if is_paginated %}
-    <div class="flex justify-center gap-2">
-        {% if page_obj.has_previous %}
-            <a href="?{% url_replace request.GET 'page' page_obj.previous_page_number %}"
-               class="px-4 py-2 bg-white border rounded-lg">{% trans "Prev" %}</a>
-        {% endif %}
-
-        <span class="px-4 py-2 bg-teal-600 text-white rounded-lg">
-            {{ page_obj.number }} / {{ paginator.num_pages }}
-        </span>
-
-        {% if page_obj.has_next %}
-            <a href="?{% url_replace request.GET 'page' page_obj.next_page_number %}"
-               class="px-4 py-2 bg-white border rounded-lg">{% trans "Next" %}</a>
-        {% endif %}
-    </div>
-    {% endif %}
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Pagination -->
+{% if is_paginated %}
+<div class="pager">
+    {% if page_obj.has_previous %}
+        <a href="?{% url_replace request.GET 'page' page_obj.previous_page_number %}" class="pg-btn">← Prev</a>
+    {% endif %}
+    <span class="pg-btn cur">{{ page_obj.number }} / {{ paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="?{% url_replace request.GET 'page' page_obj.next_page_number %}" class="pg-btn">Next →</a>
+    {% endif %}
+</div>
+{% endif %}
 
+{% block extra_js %}
 <script>
-const csrfToken = "{{ csrf_token }}";
+const csrf = '{{ csrf_token }}';
 
 async function toggleProduct(btn, type) {
     const id = btn.dataset.id;
-    const current = btn.dataset.active === "true";
-    btn.dataset.active = (!current).toString();
+    const cur = btn.dataset.active === 'true';
+    const nxt = !cur;
 
-    const url = type === "status"
+    if (type === 'status') {
+        btn.classList.toggle('t-on', nxt);
+    } else {
+        btn.classList.toggle('b-on', nxt);
+    }
+    btn.dataset.active = nxt ? 'true' : 'false';
+
+    const url = type === 'status'
         ? "{% url 'dashboard:product_toggle_status' %}"
         : "{% url 'dashboard:product_toggle_featured' %}";
 
     const res = await fetch(url, {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": csrfToken,
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: "id=" + id
+        method:'POST',
+        headers:{'X-CSRFToken':csrf,'Content-Type':'application/x-www-form-urlencoded'},
+        body:'id='+id
     });
-
     const data = await res.json();
     if (!data.success) location.reload();
 }
+
+function confirmDelete(slug) {
+    Swal.fire({
+        title:'Delete this product?', text:'All variants will also be removed.',
+        icon:'warning', showCancelButton:true,
+        confirmButtonText:'Delete', cancelButtonText:'Cancel',
+        confirmButtonColor:'#F43F5E',
+        background:'#141820', color:'#E8EAEF', iconColor:'#F43F5E'
+    }).then(r => {
+        if (!r.isConfirmed) return;
+        const f = document.createElement('form');
+        f.method='POST';
+        f.action="{% url 'dashboard:product_delete' 'SLUG' %}".replace('SLUG', slug);
+        f.innerHTML=`<input name="csrfmiddlewaretoken" value="${csrf}">`;
+        document.body.appendChild(f); f.submit();
+    });
+}
 </script>
+{% endblock %}
 
 {% endblock %}

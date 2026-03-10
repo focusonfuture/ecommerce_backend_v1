@@ -2,241 +2,297 @@
 {% load i18n %}
 {% load form_extras %}
 
-{% block content %}
+{% block breadcrumb %}Variant Attributes{% endblock %}
 
+{% block content %}
 <style>
-.animate-fade {
-    animation: fade .35s ease-out both;
-}
-@keyframes fade {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+    /* ── all colours/fonts inherit from base.html ── */
+
+    .pg-header {
+        display:flex; align-items:center; justify-content:space-between;
+        flex-wrap:wrap; gap:14px; margin-bottom:24px;
+        opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) 0s forwards;
+    }
+    .pg-icon { width:46px; height:46px; border-radius:14px; font-size:20px; flex-shrink:0; background:linear-gradient(135deg,rgba(79,110,247,.18),rgba(124,58,237,.1)); border:1px solid rgba(79,110,247,.25); display:flex; align-items:center; justify-content:center; }
+    .pg-title { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:#E8EAEF; letter-spacing:-.3px; }
+    .pg-sub   { font-size:13px; color:#4A5168; margin-top:2px; }
+
+    /* stats */
+    .stats-row {
+        display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px;
+        opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .08s forwards;
+    }
+    @media(max-width:640px){ .stats-row { grid-template-columns:1fr; } }
+    .stat-chip { background:#141820; border:1px solid #1E2330; border-radius:16px; padding:18px 22px; transition:border-color .2s; }
+    .stat-chip:hover { border-color:#252B3A; }
+    .sc-lbl { font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:#4A5168; margin-bottom:8px; }
+    .sc-val { font-family:'Syne',sans-serif; font-size:26px; font-weight:700; color:#E8EAEF; }
+    .sc-val.teal { color:#0DCCB1; }
+    .sc-tip { font-size:12px; color:#4F6EF7; line-height:1.55; margin-top:6px; }
+
+    /* filter bar */
+    .filter-bar {
+        background:#141820; border:1px solid #1E2330; border-radius:16px;
+        padding:14px 18px; display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+        margin-bottom:16px;
+        opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .14s forwards;
+    }
+    .fi-search { position:relative; flex:1; min-width:180px; }
+    .fi-search i { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#3A4157; font-size:12px; pointer-events:none; }
+    .fi-input { width:100%; height:40px; background:#0D1017; border:1px solid #1E2330; border-radius:10px; padding:0 14px 0 36px; font-family:'DM Sans',sans-serif; font-size:13px; color:#E8EAEF; outline:none; transition:border-color .2s,box-shadow .2s; }
+    .fi-input::placeholder { color:#3A4157; }
+    .fi-input:focus { border-color:#4F6EF7; box-shadow:0 0 0 3px rgba(79,110,247,.1); background:#111620; }
+    .fi-sel-wrap { position:relative; }
+    .fi-sel-wrap::after { content:'▾'; position:absolute; right:10px; top:50%; transform:translateY(-50%); color:#4A5168; font-size:11px; pointer-events:none; }
+    .fi-select { height:40px; padding:0 28px 0 12px; -webkit-appearance:none; background:#0D1017; border:1px solid #1E2330; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:13px; color:#E8EAEF; outline:none; cursor:pointer; transition:border-color .2s; }
+    .fi-select:focus { border-color:#4F6EF7; box-shadow:0 0 0 3px rgba(79,110,247,.1); }
+    .fi-select option { background:#0D1017; }
+    .fi-btn { height:40px; padding:0 16px; border-radius:10px; border:none; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:.2s; }
+    .fi-btn.apply { background:#4F6EF7; color:#fff; }
+    .fi-btn.apply:hover { background:#3d5ce5; }
+    .fi-btn.reset { background:#0D1017; border:1px solid #1E2330; color:#8B92A8; text-decoration:none; display:inline-flex; align-items:center; }
+    .fi-btn.reset:hover { background:#141820; color:#E8EAEF; }
+
+    /* quick-add bar */
+    .add-bar {
+        background:#141820; border:1px solid #1E2330; border-radius:16px;
+        padding:14px 18px; display:flex; gap:10px; align-items:center;
+        margin-bottom:20px;
+        opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .2s forwards;
+    }
+    .add-input {
+        flex:1; height:42px; background:#0D1017; border:1px solid #1E2330;
+        border-radius:10px; padding:0 16px;
+        font-family:'DM Sans',sans-serif; font-size:14px; color:#E8EAEF; outline:none;
+        transition:border-color .2s,box-shadow .2s;
+    }
+    .add-input::placeholder { color:#3A4157; }
+    .add-input:focus { border-color:#4F6EF7; box-shadow:0 0 0 3px rgba(79,110,247,.1); background:#111620; }
+    .add-btn {
+        height:42px; padding:0 22px; border:none; border-radius:10px; cursor:pointer;
+        background:linear-gradient(135deg,#4F6EF7,#7C3AED); color:#fff;
+        font-family:'Syne',sans-serif; font-size:13px; font-weight:700;
+        box-shadow:0 4px 14px rgba(79,110,247,.25);
+        transition:transform .2s,box-shadow .2s;
+        display:flex; align-items:center; gap:7px;
+    }
+    .add-btn:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(79,110,247,.35); }
+
+    /* table */
+    .tbl-card {
+        background:#141820; border:1px solid #1E2330; border-radius:18px;
+        overflow:hidden; margin-bottom:20px;
+        opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .26s forwards;
+    }
+    .tbl-scroll { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; }
+    thead tr { background:#0D1017; border-bottom:1px solid #1E2330; }
+    th { padding:13px 18px; text-align:left; white-space:nowrap; font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:#4A5168; }
+    th.c { text-align:center; }
+    tbody tr { border-bottom:1px solid #111520; transition:background .15s; }
+    tbody tr:last-child { border-bottom:none; }
+    tbody tr:hover { background:rgba(79,110,247,.03); }
+    tbody tr.dim { opacity:.42; }
+    td { padding:14px 18px; font-size:13px; color:#C4C9D8; vertical-align:middle; }
+    td.c { text-align:center; }
+
+    .attr-name { font-weight:600; color:#E8EAEF; font-size:14px; }
+
+    .val-badge {
+        display:inline-flex; align-items:center; justify-content:center;
+        font-family:'Syne',sans-serif; font-size:12px; font-weight:700;
+        min-width:28px; height:24px; padding:0 8px; border-radius:8px;
+        background:rgba(13,204,177,.1); border:1px solid rgba(13,204,177,.2); color:#0DCCB1;
+    }
+    .val-badge.zero { background:rgba(244,63,94,.08); border-color:rgba(244,63,94,.2); color:#F43F5E; }
+
+    .tog { display:inline-flex; align-items:center; width:42px; height:24px; border-radius:12px; padding:3px; border:none; cursor:pointer; transition:background .25s; background:#1E2330; }
+    .tog .dot { width:18px; height:18px; border-radius:9px; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.4); transition:transform .25s cubic-bezier(.16,1,.3,1); }
+    .tog.on { background:#0DCCB1; }
+    .tog.on .dot { transform:translateX(18px); }
+
+    .act-manage {
+        display:inline-flex; align-items:center; gap:6px;
+        height:32px; padding:0 14px; border-radius:8px; text-decoration:none;
+        background:rgba(79,110,247,.1); border:1px solid rgba(79,110,247,.2); color:#4F6EF7;
+        font-size:12px; font-weight:500; transition:.2s;
+    }
+    .act-manage:hover { background:rgba(79,110,247,.18); border-color:#4F6EF7; color:#E8EAEF; }
+
+    .empty-state { text-align:center; padding:60px 20px; color:#4A5168; }
+    .empty-state .ei { font-size:42px; margin-bottom:14px; opacity:.45; }
+
+    /* pagination */
+    .pager { display:flex; align-items:center; justify-content:center; gap:6px; opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .34s forwards; }
+    .pg-btn { height:36px; min-width:36px; padding:0 14px; border-radius:9px; font-size:13px; font-weight:500; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; background:#141820; border:1px solid #1E2330; color:#8B92A8; transition:.2s; }
+    .pg-btn:hover { background:#1E2330; color:#E8EAEF; }
+    .pg-btn.cur { background:linear-gradient(135deg,#4F6EF7,#7C3AED); border-color:transparent; color:#fff; font-family:'Syne',sans-serif; }
 </style>
 
-<div class="max-w-6xl mx-auto space-y-8 animate-fade">
-
-    <!-- ================= HEADER ================= -->
-    <div>
-        <h1 class="text-2xl font-semibold text-slate-800">
-            {% trans "Variant Attributes" %}
-        </h1>
-        <p class="text-sm text-slate-500 mt-1">
-            {% trans "Manage attributes like Color, Size, Storage" %}
-        </p>
-    </div>
-
-    <!-- ================= STATS ================= -->
-    <div class="grid sm:grid-cols-3 gap-4">
-        <div class="bg-white p-4 rounded-xl shadow-sm">
-            <p class="text-xs text-slate-500">{% trans "Total" %}</p>
-            <p class="text-2xl font-semibold">{{ total_count }}</p>
-        </div>
-        <div class="bg-white p-4 rounded-xl shadow-sm">
-            <p class="text-xs text-slate-500">{% trans "Active" %}</p>
-            <p class="text-2xl font-semibold text-emerald-600">
-                {{ active_count }}
-            </p>
-        </div>
-        <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex items-center">
-            <p class="text-sm text-emerald-700">
-                {% trans "Tip: Manage values inside each attribute" %}
-            </p>
+<!-- Header -->
+<div class="pg-header">
+    <div style="display:flex;align-items:center;gap:14px;">
+        <div class="pg-icon">🔀</div>
+        <div>
+            <div class="pg-title">Variant Attributes</div>
+            <div class="pg-sub">Manage attributes like Color, Size, Storage</div>
         </div>
     </div>
+</div>
 
-    <!-- ================= FILTERS ================= -->
-    <form method="get"
-          class="bg-white p-4 rounded-xl shadow-sm
-                 grid sm:grid-cols-4 gap-3 items-center">
+<!-- Stats -->
+<div class="stats-row">
+    <div class="stat-chip">
+        <div class="sc-lbl">Total Attributes</div>
+        <div class="sc-val">{{ total_count }}</div>
+    </div>
+    <div class="stat-chip">
+        <div class="sc-lbl">Active</div>
+        <div class="sc-val teal">{{ active_count }}</div>
+    </div>
+    <div class="stat-chip">
+        <div class="sc-lbl">💡 Tip</div>
+        <div class="sc-tip">Click "Manage Values" to add options like Red, Blue, 128GB to each attribute.</div>
+    </div>
+</div>
 
-        <input type="text"
-               name="search"
-               value="{{ search_query }}"
-               placeholder="{% trans 'Search attribute…' %}"
-               class="sm:col-span-2 px-4 py-2.5 rounded-lg border">
-
-        <select name="is_active"
-                class="px-4 py-2.5 rounded-lg border">
-            <option value="">{% trans "Status" %}</option>
-            <option value="1" {% if filter_is_active == "1" %}selected{% endif %}>
-                {% trans "Active" %}
-            </option>
-            <option value="0" {% if filter_is_active == "0" %}selected{% endif %}>
-                {% trans "Inactive" %}
-            </option>
-        </select>
-
-        <div class="flex gap-2">
-            <button class="flex-1 h-[42px] bg-teal-600 text-white rounded-lg">
-                {% trans "Apply" %}
-            </button>
-            <a href="{% url 'dashboard:variant_attribute_index' %}"
-               class="flex-1 h-[42px] flex items-center justify-center
-                      bg-slate-100 rounded-lg">
-                {% trans "Reset" %}
-            </a>
+<!-- Filters -->
+<form method="get">
+    <div class="filter-bar">
+        <div class="fi-search">
+            <i class="fas fa-search"></i>
+            <input type="text" name="search" value="{{ search_query }}"
+                   placeholder="Search attribute…" class="fi-input">
         </div>
-    </form>
+        <div class="fi-sel-wrap">
+            <select name="is_active" class="fi-select">
+                <option value="">All Status</option>
+                <option value="1" {% if filter_is_active == "1" %}selected{% endif %}>Active</option>
+                <option value="0" {% if filter_is_active == "0" %}selected{% endif %}>Inactive</option>
+            </select>
+        </div>
+        <button type="submit" class="fi-btn apply">Apply</button>
+        <a href="{% url 'dashboard:variant_attribute_index' %}" class="fi-btn reset">Reset</a>
+    </div>
+</form>
 
-    <!-- ================= CREATE ================= -->
-    <form id="createForm"
-          class="bg-white p-4 rounded-xl shadow-sm
-                 flex gap-3 items-center">
+<!-- Quick Add -->
+<div class="add-bar">
+    <span style="font-size:13px;font-weight:500;color:#8B92A8;white-space:nowrap;">New Attribute</span>
+    <input id="attrNameInput" type="text" placeholder="e.g. Color, Size, Storage…" class="add-input">
+    <button type="button" id="addAttrBtn" class="add-btn">
+        <span>＋</span> Add
+    </button>
+</div>
 
-        {% csrf_token %}
-        <input name="name"
-               placeholder="{% trans 'New attribute (e.g. Color)' %}"
-               class="flex-1 px-4 py-2.5 rounded-lg border">
-
-        <button type="submit"
-                class="h-[42px] px-6 bg-teal-600 hover:bg-teal-700
-                       text-white rounded-lg transition">
-            {% trans "Add" %}
-        </button>
-    </form>
-
-    <!-- ================= LIST ================= -->
-    <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
-        <table class="w-full text-sm">
-            <thead class="bg-slate-100 text-slate-600">
+<!-- Table -->
+<div class="tbl-card">
+    <div class="tbl-scroll">
+        <table>
+            <thead>
                 <tr>
-                    <th class="p-4 text-left">{% trans "Attribute" %}</th>
-                    <th class="p-4 text-center">{% trans "Values" %}</th>
-                    <th class="p-4 text-center">{% trans "Status" %}</th>
-                    <th class="p-4 text-center">{% trans "Actions" %}</th>
+                    <th>Attribute</th>
+                    <th class="c">Values</th>
+                    <th class="c">Active</th>
+                    <th class="c">Actions</th>
                 </tr>
             </thead>
-
-            <tbody class="divide-y">
+            <tbody>
             {% for attr in attributes %}
-                <tr class="hover:bg-slate-50
-                           {% if not attr.is_active %}opacity-60{% endif %}">
-
-                    <td class="p-4 font-medium text-slate-800">
-                        {{ attr.name }}
+                <tr {% if not attr.is_active %}class="dim"{% endif %}>
+                    <td><span class="attr-name">{{ attr.name }}</span></td>
+                    <td class="c">
+                        <span class="val-badge {% if attr.values.count == 0 %}zero{% endif %}">
+                            {{ attr.values.count }}
+                        </span>
                     </td>
-
-                    <td class="p-4 text-center">
-                        {{ attr.values.count }}
+                    <td class="c">
+                        <button type="button"
+                                data-id="{{ attr.id }}"
+                                data-active="{{ attr.is_active|yesno:'true,false' }}"
+                                onclick="toggleAttr(this)"
+                                class="tog {% if attr.is_active %}on{% endif %}">
+                            <div class="dot"></div>
+                        </button>
                     </td>
-
-                    <td class="p-4 text-center">
-                        <div class="flex justify-center">
-                            <button type="button"
-                                    data-id="{{ attr.id }}"
-                                    data-active="{{ attr.is_active|yesno:'true,false' }}"
-                                    onclick="toggleAttr(this)"
-                                    class="relative inline-flex h-6 w-11 rounded-full
-                                           transition
-                                           {{ attr.is_active|yesno:'bg-emerald-500,bg-slate-300' }}">
-                                <span class="inline-block h-4 w-4 bg-white rounded-full shadow
-                                             transform transition
-                                             {{ attr.is_active|yesno:'translate-x-6,translate-x-1' }}">
-                                </span>
-                            </button>
-                        </div>
-                    </td>
-
-                    <td class="p-4 text-center">
-                        <a href="{% url 'dashboard:variant_attribute_values' attr.id %}"
-                           class="inline-flex items-center justify-center
-                                  px-4 py-2 bg-slate-100 hover:bg-slate-200
-                                  rounded-lg transition">
-                            {% trans "Manage Values" %}
+                    <td class="c">
+                        <a href="{% url 'dashboard:variant_attribute_values' attr.id %}" class="act-manage">
+                            🎨 Manage Values
                         </a>
                     </td>
                 </tr>
             {% empty %}
-                <tr>
-                    <td colspan="4" class="text-center py-16 text-slate-500">
-                        {% trans "No attributes found" %}
-                    </td>
-                </tr>
+                <tr><td colspan="4">
+                    <div class="empty-state">
+                        <div class="ei">🔀</div>
+                        <p>No attributes yet. Add one above to get started.</p>
+                    </div>
+                </td></tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
-
-    <!-- ================= PAGINATION ================= -->
-    {% if is_paginated %}
-    <div class="flex justify-center gap-2">
-        {% if page_obj.has_previous %}
-            <a href="?{% url_replace request.GET 'page' page_obj.previous_page_number %}"
-               class="px-4 py-2 bg-white border rounded-lg">
-                {% trans "Prev" %}
-            </a>
-        {% endif %}
-
-        <span class="px-4 py-2 bg-teal-600 text-white rounded-lg">
-            {{ page_obj.number }} / {{ paginator.num_pages }}
-        </span>
-
-        {% if page_obj.has_next %}
-            <a href="?{% url_replace request.GET 'page' page_obj.next_page_number %}"
-               class="px-4 py-2 bg-white border rounded-lg">
-                {% trans "Next" %}
-            </a>
-        {% endif %}
-    </div>
-    {% endif %}
-
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-const csrfToken = "{{ csrf_token }}";
+<!-- Pagination -->
+{% if is_paginated %}
+<div class="pager">
+    {% if page_obj.has_previous %}
+        <a href="?{% url_replace request.GET 'page' page_obj.previous_page_number %}" class="pg-btn">← Prev</a>
+    {% endif %}
+    <span class="pg-btn cur">{{ page_obj.number }} / {{ paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="?{% url_replace request.GET 'page' page_obj.next_page_number %}" class="pg-btn">Next →</a>
+    {% endif %}
+</div>
+{% endif %}
 
-/* CREATE ATTRIBUTE */
-document.getElementById("createForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const name = e.target.name.value.trim();
+{% block extra_js %}
+<script>
+const csrf = '{{ csrf_token }}';
+
+document.getElementById('addAttrBtn').addEventListener('click', async () => {
+    const name = document.getElementById('attrNameInput').value.trim();
     if (!name) {
-        Swal.fire("Error", "Attribute name is required", "error");
+        Swal.fire({icon:'warning',title:'Name required',text:'Please enter an attribute name.',background:'#141820',color:'#E8EAEF'});
         return;
     }
-
     const res = await fetch("{% url 'dashboard:variant_attribute_create' %}", {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": csrfToken,
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: "name=" + encodeURIComponent(name)
+        method:'POST',
+        headers:{'X-CSRFToken':csrf,'Content-Type':'application/x-www-form-urlencoded'},
+        body:'name='+encodeURIComponent(name)
     });
-
     const data = await res.json();
-    if (data.success) location.reload();
-    else Swal.fire("Error", data.message || "Failed", "error");
+    if (data.success) {
+        Swal.fire({toast:true,position:'top-end',icon:'success',title:'Attribute added',showConfirmButton:false,timer:1500,background:'#141820',color:'#E8EAEF'});
+        setTimeout(() => location.reload(), 600);
+    } else {
+        Swal.fire({icon:'error',title:'Error',text:data.message||'Failed',background:'#141820',color:'#E8EAEF'});
+    }
 });
 
-/* TOGGLE STATUS */
-async function toggleAttr(btn) {
-    const id = btn.dataset.id;
-    const current = btn.dataset.active === "true";
-    const next = !current;
+// also allow Enter key in input
+document.getElementById('attrNameInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addAttrBtn').click(); }
+});
 
-    btn.dataset.active = next;
-    btn.classList.toggle("bg-emerald-500", next);
-    btn.classList.toggle("bg-slate-300", !next);
-    btn.querySelector("span").classList.toggle("translate-x-6", next);
-    btn.querySelector("span").classList.toggle("translate-x-1", !next);
+async function toggleAttr(btn) {
+    const id = btn.dataset.id, cur = btn.dataset.active === 'true', nxt = !cur;
+    btn.classList.toggle('on', nxt);
+    btn.dataset.active = nxt ? 'true' : 'false';
 
     const res = await fetch("{% url 'dashboard:variant_attribute_toggle' %}", {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": csrfToken,
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: "id=" + id
+        method:'POST',
+        headers:{'X-CSRFToken':csrf,'Content-Type':'application/x-www-form-urlencoded'},
+        body:'id='+id
     });
-
     const data = await res.json();
     if (!data.success) {
-        Swal.fire("Error", "Update failed", "error");
+        Swal.fire({icon:'error',title:'Error',text:'Update failed',background:'#141820',color:'#E8EAEF'});
         location.reload();
     }
 }
 </script>
+{% endblock %}
 
 {% endblock %}

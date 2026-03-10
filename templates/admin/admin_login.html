@@ -1,277 +1,506 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ElectroMart • Admin Portal</title>
-
-    <!-- Preconnect for faster fonts -->
+    <title>ElectroMart — Admin Login</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-
-    <!-- Tailwind CSS via CDN (dev only — replace with compiled build in production) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        display: ['"Space Grotesk"', 'sans-serif']
-                    },
-                    animation: {
-                        'gradient': 'gradientShift 15s ease infinite',
-                        'float': 'float 20s infinite linear',
-                    },
-                    keyframes: {
-                        gradientShift: {
-                            '0%, 100%': { backgroundPosition: '0% 50%' },
-                            '50%': { backgroundPosition: '100% 50%' },
-                        },
-                        float: {
-                            '0%': { transform: 'translateY(100vh) translateX(0)', opacity: '0' },
-                            '10%': { opacity: '1' },
-                            '90%': { opacity: '1' },
-                            '100%': { transform: 'translateY(-100px) translateX(100px)', opacity: '0' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-
-    <!-- SweetAlert2 (loaded once) -->
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <style>
-        body {
-            background: linear-gradient(-45deg, #0f0f23, #1a1a2e, #16213e, #0f3460);
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
-            min-height: 100vh;
-            font-family: 'Inter', sans-serif;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --accent: #4F6EF7;
+            --accent2: #7C3AED;
+            --teal: #0DCCB1;
+            --rose: #F43F5E;
+            --bg: #070910;
+            --surface: #0D1017;
+            --border: #181E2C;
+            --text: #E8EAEF;
+            --sub: #8B92A8;
+            --muted: #3A4157;
         }
 
-        .particle {
-            position: absolute;
-            background: rgba(59, 130, 246, 0.15);
-            border-radius: 50%;
+        html, body {
+            height: 100%; width: 100%;
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        /* ─── CANVAS BACKGROUND ──────────────────────── */
+        #bg-canvas {
+            position: fixed; inset: 0; z-index: 0;
             pointer-events: none;
-            animation: float 20s infinite linear;
         }
 
-        .glass {
-            background: rgba(255, 255, 255, 0.09);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+        /* ─── LAYOUT ─────────────────────────────────── */
+        .page {
+            position: relative; z-index: 1;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
         }
 
-        .input-focus:focus {
+        @media (max-width: 768px) {
+            .page { grid-template-columns: 1fr; }
+            .brand-panel { display: none; }
+        }
+
+        /* ─── LEFT BRAND PANEL ───────────────────────── */
+        .brand-panel {
+            position: relative;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: flex-start;
+            padding: 60px 64px;
+            overflow: hidden;
+        }
+        .brand-panel::before {
+            content: '';
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 30% 40%, rgba(79,110,247,0.09) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 70% 70%, rgba(124,58,237,0.07) 0%, transparent 60%);
+        }
+        .brand-panel-content { position: relative; z-index: 2; }
+
+        .brand-logo {
+            display: flex; align-items: center; gap: 16px;
+            margin-bottom: 64px;
+        }
+        .brand-icon {
+            width: 52px; height: 52px; border-radius: 16px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 26px;
+            box-shadow: 0 0 32px rgba(79,110,247,0.3), 0 0 80px rgba(79,110,247,0.1);
+            animation: iconFloat 4s ease-in-out infinite;
+        }
+        @keyframes iconFloat { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-6px);} }
+
+        .brand-name { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; letter-spacing:-0.3px; }
+        .brand-tagline { font-size:12px; color:var(--sub); letter-spacing:2px; text-transform:uppercase; font-weight:400; }
+
+        .brand-headline {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(28px, 3.5vw, 44px);
+            font-weight: 800; line-height: 1.12;
+            letter-spacing: -1px; color: var(--text);
+            margin-bottom: 20px;
+        }
+        .brand-headline .hl {
+            background: linear-gradient(135deg, #4F6EF7, #0DCCB1);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .brand-desc { font-size: 15px; color: var(--sub); line-height: 1.7; max-width: 380px; margin-bottom: 48px; }
+
+        .brand-stats { display: flex; gap: 32px; }
+        .bstat { }
+        .bstat-val { font-family:'Syne',sans-serif; font-size:26px; font-weight:700; color:var(--text); }
+        .bstat-label { font-size:12px; color:var(--muted); margin-top:2px; letter-spacing:0.5px; }
+
+        /* decorative line */
+        .brand-divider {
+            width: 48px; height: 3px; border-radius: 10px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            margin-bottom: 32px;
+        }
+
+        /* ─── RIGHT FORM PANEL ───────────────────────── */
+        .form-panel {
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: 40px 32px;
+            border-left: 1px solid var(--border);
+            position: relative;
+        }
+        .form-panel::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(ellipse 70% 50% at 60% 50%, rgba(79,110,247,0.04) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .form-box {
+            width: 100%; max-width: 400px;
+            position: relative; z-index: 2;
+            opacity: 0; transform: translateY(20px);
+            animation: formReveal 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s forwards;
+        }
+        @keyframes formReveal { to { opacity:1; transform:translateY(0); } }
+
+        .form-header { margin-bottom: 36px; }
+        .form-kicker {
+            font-size: 11px; font-weight: 600; letter-spacing: 2px;
+            text-transform: uppercase; color: var(--accent);
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 12px;
+        }
+        .form-kicker::before {
+            content: ''; width: 20px; height: 2px; border-radius: 2px;
+            background: var(--accent);
+        }
+        .form-title { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; color:var(--text); letter-spacing:-0.5px; margin-bottom:6px; }
+        .form-sub { font-size:14px; color:var(--sub); }
+
+        /* field */
+        .field { margin-bottom: 20px; }
+        .field-label {
+            display: block; font-size:12px; font-weight:500;
+            color:var(--sub); letter-spacing:0.3px;
+            margin-bottom: 8px;
+        }
+        .field-wrap { position: relative; }
+        .field-icon {
+            position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+            color: var(--muted); font-size: 15px;
+            pointer-events: none; transition: color 0.2s;
+        }
+        .field-input {
+            width: 100%; height: 52px;
+            background: #0D1017; border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 0 16px 0 46px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px; color: var(--text);
             outline: none;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
-            border-color: #6366f1;
+            transition: all 0.25s ease;
         }
+        .field-input::placeholder { color: var(--muted); }
+        .field-input:focus {
+            border-color: var(--accent);
+            background: #111620;
+            box-shadow: 0 0 0 4px rgba(79,110,247,0.1);
+        }
+        .field-input:focus ~ .field-icon,
+        .field-wrap:focus-within .field-icon { color: var(--accent); }
 
-        .btn-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        /* toggle pw */
+        .pw-toggle {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer;
+            color: var(--muted); font-size: 16px;
+            padding: 4px; border-radius: 6px;
+            transition: color 0.2s;
+        }
+        .pw-toggle:hover { color: var(--text); }
+
+        /* error hint */
+        .field-error { font-size: 12px; color: var(--rose); margin-top: 6px; display: none; }
+        .field-input.error { border-color: var(--rose); box-shadow: 0 0 0 4px rgba(244,63,94,0.08); }
+
+        /* submit */
+        .btn-submit {
+            width: 100%; height: 52px;
+            border: none; border-radius: 14px; cursor: pointer;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+            color: white; font-family: 'Syne', sans-serif;
+            font-size: 15px; font-weight: 700; letter-spacing: 0.2px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
             transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(79,110,247,0.25);
+            position: relative; overflow: hidden;
+            margin-top: 28px;
         }
-        .btn-gradient:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+        .btn-submit::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(79,110,247,0.35); }
+        .btn-submit:hover::before { opacity: 1; }
+        .btn-submit:active { transform: translateY(0); }
+        .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+        .spinner {
+            width: 18px; height: 18px; border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            display: none;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* divider */
+        .form-divider {
+            display: flex; align-items: center; gap: 12px;
+            margin: 24px 0; color: var(--muted); font-size: 12px;
+        }
+        .form-divider::before, .form-divider::after {
+            content: ''; flex: 1; height: 1px; background: var(--border);
         }
 
-        /* Honeypot - invisible to humans */
-        .bot-field {
-            position: absolute;
-            left: -9999px;
-            opacity: 0;
+        /* security badge */
+        .security-badge {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            font-size: 12px; color: var(--muted); margin-top: 28px;
+        }
+        .security-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); }
+
+        /* honeypot */
+        .bot-trap { position: absolute; left: -9999px; opacity: 0; pointer-events: none; }
+
+        /* ─── FLOATING ORBS (decorative) ─────────────── */
+        .orb {
+            position: fixed; border-radius: 50%;
+            filter: blur(80px); pointer-events: none; z-index: 0;
+            animation: orbDrift 18s ease-in-out infinite alternate;
+        }
+        .orb-1 { width: 400px; height: 400px; background: rgba(79,110,247,0.06); top:-100px; left:-100px; }
+        .orb-2 { width: 300px; height: 300px; background: rgba(124,58,237,0.06); bottom:-80px; right:0; animation-delay:-6s; }
+        .orb-3 { width: 200px; height: 200px; background: rgba(13,204,177,0.04); top:50%; right:20%; animation-delay:-12s; }
+        @keyframes orbDrift { 0%{transform:translate(0,0);} 100%{transform:translate(30px,20px);} }
+
+        /* footer */
+        .form-footer {
+            position: absolute; bottom: 24px;
+            font-size: 11px; color: var(--muted); letter-spacing: 0.3px;
         }
     </style>
 </head>
-<body class="relative min-h-screen flex items-center justify-center overflow-hidden">
+<body>
 
-    <!-- Floating Particles -->
-    <div id="particles" class="fixed inset-0 pointer-events-none"></div>
+<!-- Decorative orbs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
 
-    <!-- Main Login Card -->
-    <div class="relative z-10 w-full max-w-md px-6">
-        <div class="glass rounded-3xl overflow-hidden shadow-2xl">
-            <div class="p-10">
+<!-- Animated grid canvas -->
+<canvas id="bg-canvas"></canvas>
 
-                <!-- Logo & Title -->
-                <div class="text-center mb-10">
-                    <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-5 shadow-lg">
-                        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <h1 class="text-4xl font-bold text-white mb-2 font-display">ElectroMart</h1>
-                    <p class="text-blue-200 text-lg">Admin Dashboard</p>
+<div class="page">
+
+    <!-- ─── LEFT: BRAND PANEL ─────────────────────────── -->
+    <div class="brand-panel">
+        <div class="brand-panel-content">
+
+            <div class="brand-logo">
+                <div class="brand-icon">⚡</div>
+                <div>
+                    <div class="brand-name">ElectroMart</div>
+                    <div class="brand-tagline">Control Center</div>
                 </div>
-
-                <!-- Messages (SweetAlert2 Toasts) -->
-                {% if messages %}
-                <script>
-                    document.addEventListener('DOMContentLoaded', () => {
-                        const Toast = Swal.mixin({
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false,
-                            timer: 4500,
-                            timerProgressBar: true,
-                            background: 'rgba(17, 24, 39, 0.98)',
-                            color: '#fff',
-                            iconColor: '#fff',
-                            didOpen: (toast) => {
-                                toast.addEventListener('mouseenter', Swal.stopTimer);
-                                toast.addEventListener('mouseleave', Swal.resumeTimer);
-                            }
-                        });
-
-                        {% for message in messages %}
-                            Toast.fire({
-                                icon: '{{ message.tags|default:"info" }}',
-                                title: '{{ message|safe }}'
-                            });
-                        {% endfor %}
-                    });
-                </script>
-                {% endif %}
-
-                <!-- Login Form -->
-                <form method="post" id="loginForm" class="space-y-6">
-                    {% csrf_token %}
-
-                    <!-- Honeypot Field (Anti-bot) -->
-                    <div class="bot-field" aria-hidden="true">
-                        <input type="text" name="website" tabindex="-1" autocomplete="off" value="">
-                    </div>
-
-                    <!-- Email Field -->
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-blue-100 mb-2">Email Address</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <svg class="w-5 h-5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <input 
-                                type="email"
-                                name="email"
-                                id="email"
-                                required
-                                autocomplete="email"
-                                placeholder="admin@electromart.com"
-                                class="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 input-focus transition-all duration-300 focus:bg-white/15"
-                            >
-                        </div>
-                    </div>
-
-                    <!-- Password Field -->
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-blue-100 mb-2">Password</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <svg class="w-5 h-5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0-2.21-1.79-4-4-4s-4 1.79-4 4 1.79 4 4 4 4-1.79 4-4zm-8 4v1a1 1 0 001 1h14a1 1 0 001-1v-1m-8-9v3a3 3 0 00-3 3m3-3a3 3 0 013 3m-6 6h12" />
-                                </svg>
-                            </div>
-                            <input 
-                                type="password"
-                                name="password"
-                                id="password"
-                                required
-                                autocomplete="current-password"
-                                placeholder="Enter your password"
-                                class="w-full pl-12 pr-12 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 input-focus transition-all duration-300 focus:bg-white/15"
-                            >
-                            <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-4 flex items-center text-blue-300 hover:text-white transition">
-                                <svg id="eyeOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                                <svg id="eyeClosed" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L2 2m7.878 7.878L21.121 21.121" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <button 
-                        type="submit"
-                        id="loginBtn"
-                        class="w-full py-4 px-6 btn-gradient text-white font-semibold text-lg rounded-xl shadow-2xl transform transition-all duration-300 flex items-center justify-center space-x-3 mt-8 hover:scale-105"
-                    >
-                        <span id="btnText">Sign In to Dashboard</span>
-                        <svg id="loadingSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                        </svg>
-                    </button>
-
-                    <p class="text-center text-blue-200 text-sm mt-8">
-                        Secured Login • Only authorized personnel
-                    </p>
-                </form>
             </div>
-        </div>
 
-        <!-- Footer -->
-        <div class="text-center mt-8 text-blue-300 text-sm">
-            © 2025 <span class="font-display">ElectroMart</span> • All Rights Reserved
+            <div class="brand-divider"></div>
+
+            <h1 class="brand-headline">
+                Your store,<br>
+                <span class="hl">fully in control.</span>
+            </h1>
+            <p class="brand-desc">
+                Manage products, track orders, and grow your electronics business — all from one powerful, beautifully designed dashboard.
+            </p>
+
+            <div class="brand-stats">
+                <div class="bstat">
+                    <div class="bstat-val">5,678</div>
+                    <div class="bstat-label">Customers</div>
+                </div>
+                <div class="bstat">
+                    <div class="bstat-val">1,234</div>
+                    <div class="bstat-label">Orders</div>
+                </div>
+                <div class="bstat">
+                    <div class="bstat-val">₹28L</div>
+                    <div class="bstat-label">Revenue</div>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- Particles + Interactions -->
-    <script>
-        // Floating particles
-        function createParticle() {
-            const particle = document.createElement('div');
-            particle.classList.add('particle');
-            const size = Math.random() * 70 + 20 + 'px';
-            particle.style.width = size;
-            particle.style.height = size;
-            particle.style.left = Math.random() * 100 + '%';
-            particle.style.animationDuration = Math.random() * 25 + 15 + 's';
-            particle.style.animationDelay = Math.random() * 5 + 's';
-            document.getElementById('particles').appendChild(particle);
-            setTimeout(() => particle.remove(), 40000);
+    <!-- ─── RIGHT: FORM PANEL ─────────────────────────── -->
+    <div class="form-panel">
+
+        <div class="form-box">
+            <div class="form-header">
+                <div class="form-kicker">Secure Access</div>
+                <h2 class="form-title">Sign in</h2>
+                <p class="form-sub">Enter your credentials to access the dashboard.</p>
+            </div>
+
+            <form method="post" id="loginForm" novalidate>
+                {% csrf_token %}
+                <div class="bot-trap" aria-hidden="true">
+                    <input type="text" name="website" tabindex="-1" autocomplete="off">
+                </div>
+
+                <!-- Email -->
+                <div class="field">
+                    <label class="field-label" for="email">Email address</label>
+                    <div class="field-wrap">
+                        <input
+                            type="email" id="email" name="email"
+                            placeholder="admin@electromart.com"
+                            autocomplete="email" required
+                            class="field-input"
+                        >
+                        <span class="field-icon">✉</span>
+                    </div>
+                    <div class="field-error" id="emailErr">Please enter a valid email address.</div>
+                </div>
+
+                <!-- Password -->
+                <div class="field">
+                    <label class="field-label" for="password">Password</label>
+                    <div class="field-wrap">
+                        <input
+                            type="password" id="password" name="password"
+                            placeholder="Enter your password"
+                            autocomplete="current-password" required
+                            class="field-input"
+                            style="padding-right:48px;"
+                        >
+                        <span class="field-icon">🔒</span>
+                        <button type="button" class="pw-toggle" id="togglePw" title="Show/hide password">
+                            <span id="eyeIcon">👁</span>
+                        </button>
+                    </div>
+                    <div class="field-error" id="pwErr">Password cannot be empty.</div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <span id="btnLabel">Sign In</span>
+                    <span class="spinner" id="spinner"></span>
+                    <span id="btnArrow">→</span>
+                </button>
+
+            </form>
+
+            <div class="security-badge">
+                <div class="security-dot"></div>
+                Secured • Authorized personnel only
+            </div>
+        </div>
+
+        <div class="form-footer">© 2025 ElectroMart. All rights reserved.</div>
+    </div>
+
+</div>
+
+<!-- Messages -->
+{% if messages %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    {% for message in messages %}
+    Swal.fire({
+        toast: true, position: 'top-end',
+        icon: '{% if message.tags == "success" %}success{% elif message.tags == "error" %}error{% else %}info{% endif %}',
+        title: '{{ message|escapejs }}',
+        timer: 4000, timerProgressBar: true, showConfirmButton: false,
+        background: '#0D1017', color: '#E8EAEF',
+        iconColor: '{% if message.tags == "success" %}#0DCCB1{% elif message.tags == "error" %}#F43F5E{% else %}#4F6EF7{% endif %}',
+    });
+    {% endfor %}
+});
+</script>
+{% endif %}
+
+<script>
+// ─── CANVAS GRID ─────────────────────────────────────
+(function() {
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let w, h;
+
+    function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    let offset = 0;
+    function draw() {
+        ctx.clearRect(0, 0, w, h);
+        const size = 60;
+        ctx.strokeStyle = 'rgba(79,110,247,0.04)';
+        ctx.lineWidth = 1;
+
+        // vertical lines
+        for (let x = (offset % size); x < w; x += size) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
         }
-        for (let i = 0; i < 18; i++) {
-            setTimeout(createParticle, i * 400);
+        // horizontal lines
+        for (let y = (offset % size); y < h; y += size) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
         }
 
-        // Password toggle
-        document.getElementById('togglePassword')?.addEventListener('click', function() {
-            const pwd = document.getElementById('password');
-            const open = document.getElementById('eyeOpen');
-            const closed = document.getElementById('eyeClosed');
-            if (pwd.type === 'password') {
-                pwd.type = 'text';
-                open.classList.add('hidden');
-                closed.classList.remove('hidden');
-            } else {
-                pwd.type = 'password';
-                open.classList.remove('hidden');
-                closed.classList.add('hidden');
+        // subtle moving dots at intersections
+        ctx.fillStyle = 'rgba(79,110,247,0.08)';
+        for (let x = (offset % size); x < w; x += size) {
+            for (let y = (offset % size); y < h; y += size) {
+                ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI * 2); ctx.fill();
             }
-        });
+        }
 
-        // Loading state on submit
-        document.getElementById('loginForm').addEventListener('submit', function() {
-            const btn = document.getElementById('loginBtn');
-            btn.disabled = true;
-            document.getElementById('btnText').classList.add('hidden');
-            document.getElementById('loadingSpinner').classList.remove('hidden');
-        });
-    </script>
+        offset += 0.2;
+        requestAnimationFrame(draw);
+    }
+    draw();
+})();
+
+// ─── PASSWORD TOGGLE ─────────────────────────────────
+document.getElementById('togglePw').addEventListener('click', function() {
+    const pwd = document.getElementById('password');
+    const eye = document.getElementById('eyeIcon');
+    if (pwd.type === 'password') {
+        pwd.type = 'text'; eye.textContent = '🙈';
+    } else {
+        pwd.type = 'password'; eye.textContent = '👁';
+    }
+});
+
+// ─── FORM VALIDATION + SUBMIT ─────────────────────────
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    let valid = true;
+
+    const email = document.getElementById('email');
+    const pw = document.getElementById('password');
+    const emailErr = document.getElementById('emailErr');
+    const pwErr = document.getElementById('pwErr');
+
+    // reset
+    [email, pw].forEach(f => f.classList.remove('error'));
+    [emailErr, pwErr].forEach(f => f.style.display = 'none');
+
+    // email
+    if (!email.value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+        email.classList.add('error');
+        emailErr.style.display = 'block';
+        valid = false;
+    }
+    // password
+    if (!pw.value) {
+        pw.classList.add('error');
+        pwErr.style.display = 'block';
+        valid = false;
+    }
+
+    if (!valid) { e.preventDefault(); return; }
+
+    // loading state
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    document.getElementById('btnLabel').textContent = 'Signing in…';
+    document.getElementById('btnArrow').style.display = 'none';
+    document.getElementById('spinner').style.display = 'block';
+});
+
+// ─── CLEAR ERROR ON INPUT ────────────────────────────
+['email','password'].forEach(id => {
+    document.getElementById(id).addEventListener('input', function() {
+        this.classList.remove('error');
+        document.getElementById(id === 'email' ? 'emailErr' : 'pwErr').style.display = 'none';
+    });
+});
+</script>
 </body>
 </html>

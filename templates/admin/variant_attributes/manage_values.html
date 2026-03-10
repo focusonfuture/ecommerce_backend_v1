@@ -1,205 +1,244 @@
 {% extends "admin/base.html" %}
 {% load i18n %}
 
-{% block content %}
+{% block breadcrumb %}{{ attribute.name }} — Values{% endblock %}
 
-<!-- ================= STYLES ================= -->
+{% block content %}
 <style>
-.animate-fade {
-    animation: fade .35s ease-out both;
-}
-@keyframes fade {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+    /* ── all colours/fonts inherit from base.html ── */
+
+    .pg-header {
+        display:flex; align-items:flex-start; justify-content:space-between;
+        flex-wrap:wrap; gap:14px; margin-bottom:24px;
+        opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) 0s forwards;
+    }
+    .back-link { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:500; color:#4A5168; text-decoration:none; margin-bottom:8px; transition:color .2s; }
+    .back-link:hover { color:#4F6EF7; }
+    .pg-title { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:#E8EAEF; letter-spacing:-.3px; }
+    .pg-sub { font-size:13px; color:#4A5168; margin-top:2px; }
+
+    .count-badge {
+        display:inline-flex; align-items:center; gap:6px;
+        height:34px; padding:0 16px; border-radius:20px;
+        background:rgba(79,110,247,.1); border:1px solid rgba(79,110,247,.2);
+        font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:#4F6EF7;
+        white-space:nowrap;
+    }
+
+    /* add value card */
+    .add-card {
+        background:#141820; border:1px solid #1E2330; border-radius:18px;
+        padding:22px 26px; margin-bottom:20px;
+        opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .08s forwards;
+    }
+    .add-card-title { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:#E8EAEF; margin-bottom:16px; letter-spacing:.3px; }
+    .add-row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+
+    .f-input {
+        background:#0D1017; border:1px solid #1E2330;
+        border-radius:10px; padding:0 14px; height:42px;
+        font-family:'DM Sans',sans-serif; font-size:14px; color:#E8EAEF; outline:none;
+        transition:border-color .2s,box-shadow .2s,background .2s;
+    }
+    .f-input::placeholder { color:#3A4157; }
+    .f-input:focus { border-color:#4F6EF7; box-shadow:0 0 0 3px rgba(79,110,247,.1); background:#111620; }
+    .f-input.name-input { flex:1; min-width:180px; }
+    .f-input.hex-input { width:130px; font-family:'Syne',sans-serif; font-size:13px; letter-spacing:1px; }
+
+    /* live color swatch */
+    .color-swatch {
+        width:42px; height:42px; border-radius:10px;
+        border:1px solid #1E2330; background:#1A1E2A;
+        transition:background .15s, border-color .2s;
+        flex-shrink:0;
+    }
+
+    .add-btn {
+        height:42px; padding:0 22px; border:none; border-radius:10px; cursor:pointer;
+        background:linear-gradient(135deg,#4F6EF7,#7C3AED); color:#fff;
+        font-family:'Syne',sans-serif; font-size:13px; font-weight:700;
+        box-shadow:0 4px 14px rgba(79,110,247,.25);
+        transition:transform .2s,box-shadow .2s;
+        display:flex; align-items:center; gap:7px;
+    }
+    .add-btn:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(79,110,247,.35); }
+
+    /* values list */
+    .values-card {
+        background:#141820; border:1px solid #1E2330; border-radius:18px;
+        overflow:hidden;
+        opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .16s forwards;
+    }
+    .values-card-header {
+        padding:16px 22px; border-bottom:1px solid #1E2330;
+        display:flex; align-items:center; justify-content:space-between;
+    }
+    .values-card-title { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:#E8EAEF; letter-spacing:.3px; }
+
+    .value-row {
+        display:flex; align-items:center; justify-content:space-between;
+        padding:14px 22px; border-bottom:1px solid #111520;
+        transition:background .15s;
+    }
+    .value-row:last-child { border-bottom:none; }
+    .value-row:hover { background:rgba(79,110,247,.03); }
+
+    .value-left { display:flex; align-items:center; gap:12px; }
+    .value-swatch {
+        width:32px; height:32px; border-radius:8px;
+        border:1px solid #1E2330; flex-shrink:0;
+    }
+    .value-name { font-weight:600; color:#E8EAEF; font-size:14px; }
+    .value-hex { font-size:11px; color:#4A5168; font-family:'Syne',sans-serif; letter-spacing:1px; margin-top:2px; }
+
+    .del-btn {
+        display:inline-flex; align-items:center; gap:5px;
+        height:30px; padding:0 12px; border-radius:8px; border:none; cursor:pointer;
+        background:rgba(244,63,94,.08); border:1px solid rgba(244,63,94,.18); color:#F43F5E;
+        font-size:12px; font-weight:500; transition:.2s;
+    }
+    .del-btn:hover { background:rgba(244,63,94,.16); border-color:#F43F5E; }
+
+    /* empty */
+    .empty-state { text-align:center; padding:56px 20px; color:#4A5168; }
+    .empty-state .ei { font-size:44px; margin-bottom:14px; opacity:.45; }
+    .empty-state p { font-size:14px; }
 </style>
 
-<div class="max-w-4xl mx-auto space-y-8 animate-fade">
+<div style="max-width:640px; margin:0 auto;">
 
-    <!-- ================= HEADER ================= -->
-    <div class="flex justify-between items-center">
+    <!-- Header -->
+    <div class="pg-header">
         <div>
-            <a href="{% url 'dashboard:variant_attribute_index' %}"
-               class="text-sm text-slate-500 hover:text-slate-700">
-                ← {% trans "Back to Attributes" %}
-            </a>
-
-            <h1 class="text-2xl font-semibold text-slate-800 mt-2">
-                {{ attribute.name }} {% trans "Values" %}
-            </h1>
-
-            <p class="text-sm text-slate-500">
-                {% trans "Manage values for this attribute" %}
-            </p>
+            <a href="{% url 'dashboard:variant_attribute_index' %}" class="back-link">← Back to Attributes</a>
+            <div class="pg-title">{{ attribute.name }}</div>
+            <div class="pg-sub">Manage values for this attribute</div>
         </div>
-
-        <span class="px-3 py-1 rounded-full text-sm
-                     bg-slate-100 text-slate-600">
-            {{ total_values }} {% trans "values" %}
-        </span>
+        <span class="count-badge">🎨 {{ total_values }} value{{ total_values|pluralize }}</span>
     </div>
 
-    <!-- ================= ADD VALUE ================= -->
-    <form id="addValueForm"
-          class="flex flex-col sm:flex-row gap-3
-                 bg-white p-4 rounded-xl shadow-sm">
+    <!-- Add Value -->
+    <div class="add-card">
+        <div class="add-card-title">Add New Value</div>
+        <div class="add-row">
+            <input id="valueInput" type="text" placeholder="e.g. Black, 128GB, XL…" class="f-input name-input">
+            <input id="hexInput" type="text" placeholder="#000000" maxlength="7" class="f-input hex-input">
+            <div class="color-swatch" id="colorSwatch"></div>
+            <button type="button" id="addValueBtn" class="add-btn">＋ Add</button>
+        </div>
+        <div style="font-size:11px;color:#4A5168;margin-top:10px;">
+            Hex code is optional — only needed for colour attributes.
+        </div>
+    </div>
 
-        {% csrf_token %}
-
-        <input id="valueInput"
-               placeholder="{% trans 'Value (e.g. Black)' %}"
-               class="flex-1 px-4 py-3 rounded-xl border">
-
-        <div class="flex items-center gap-2">
-            <input id="hexInput"
-                   placeholder="#000000"
-                   class="w-32 px-4 py-3 rounded-xl border">
-
-            <span id="colorPreview"
-                  class="w-8 h-8 rounded-full border bg-slate-200">
-            </span>
+    <!-- Values List -->
+    <div class="values-card">
+        <div class="values-card-header">
+            <span class="values-card-title">All Values</span>
         </div>
 
-        <button type="submit"
-                class="px-6 py-3 bg-teal-600 hover:bg-teal-700
-                       text-white rounded-xl transition">
-            {% trans "Add" %}
-        </button>
-    </form>
-
-    <!-- ================= VALUES LIST ================= -->
-    <div class="bg-white rounded-xl shadow-sm divide-y">
-
         {% for v in values %}
-        <div class="flex justify-between items-center p-4
-                    hover:bg-slate-50 transition">
-
-            <div class="flex items-center gap-3">
+        <div class="value-row" id="value-row-{{ v.id }}">
+            <div class="value-left">
                 {% if v.hex_code %}
-                <span class="w-6 h-6 rounded-full border"
-                      style="background: {{ v.hex_code }}"></span>
+                    <div class="value-swatch" style="background:{{ v.hex_code }};"></div>
+                {% else %}
+                    <div class="value-swatch" style="background:#1E2330;"></div>
                 {% endif %}
-
-                <span class="font-medium text-slate-800">
-                    {{ v.value }}
-                </span>
+                <div>
+                    <div class="value-name">{{ v.value }}</div>
+                    {% if v.hex_code %}
+                        <div class="value-hex">{{ v.hex_code }}</div>
+                    {% endif %}
+                </div>
             </div>
-
             <button type="button"
                     onclick="confirmDelete({{ v.id }}, '{{ v.value|escapejs }}')"
-                    class="text-sm text-red-600 hover:text-red-700
-                           hover:underline transition">
-                {% trans "Delete" %}
+                    class="del-btn">
+                🗑 Delete
             </button>
         </div>
         {% empty %}
-        <div class="p-10 text-center text-slate-500">
-            <div class="text-4xl mb-3">🎨</div>
-            {% trans "No values added yet" %}
+        <div class="empty-state">
+            <div class="ei">🎨</div>
+            <p>No values yet. Add the first one above.</p>
         </div>
         {% endfor %}
     </div>
+
 </div>
 
-<!-- ================= SCRIPTS ================= -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+{% block extra_js %}
 <script>
-const csrfToken = "{{ csrf_token }}";
-const valueInput = document.getElementById("valueInput");
-const hexInput = document.getElementById("hexInput");
-const colorPreview = document.getElementById("colorPreview");
+const csrf = '{{ csrf_token }}';
+const valueInput = document.getElementById('valueInput');
+const hexInput   = document.getElementById('hexInput');
+const swatch     = document.getElementById('colorSwatch');
 
-/* ---------- LIVE COLOR PREVIEW ---------- */
-hexInput.addEventListener("input", () => {
-    const val = hexInput.value.trim();
-    colorPreview.style.background =
-        /^#[0-9A-Fa-f]{6}$/.test(val) ? val : "#e5e7eb";
+// live hex preview
+hexInput.addEventListener('input', () => {
+    const v = hexInput.value.trim();
+    const valid = /^#[0-9A-Fa-f]{6}$/.test(v);
+    swatch.style.background = valid ? v : '#1A1E2A';
+    swatch.style.borderColor = valid ? v : '#1E2330';
+    hexInput.style.color = valid ? v : '#E8EAEF';
 });
 
-/* ---------- ADD VALUE ---------- */
-document.getElementById("addValueForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
+// Enter key on inputs
+[valueInput, hexInput].forEach(el => {
+    el.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addValueBtn').click(); }
+    });
+});
 
+document.getElementById('addValueBtn').addEventListener('click', async () => {
     const value = valueInput.value.trim();
-    const hex = hexInput.value.trim();
+    const hex   = hexInput.value.trim();
 
     if (!value) {
-        Swal.fire("Error", "Value is required", "error");
+        Swal.fire({icon:'warning',title:'Value required',text:'Please enter a value name.',background:'#141820',color:'#E8EAEF'});
         return;
     }
 
-    const res = await fetch(
-        "{% url 'dashboard:variant_value_add' attribute.id %}",
-        {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": csrfToken,
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            body: `value=${encodeURIComponent(value)}&hex_code=${encodeURIComponent(hex)}`
-        }
-    );
-
+    const res = await fetch("{% url 'dashboard:variant_value_add' attribute.id %}", {
+        method:'POST',
+        headers:{'X-CSRFToken':csrf,'Content-Type':'application/x-www-form-urlencoded'},
+        body:`value=${encodeURIComponent(value)}&hex_code=${encodeURIComponent(hex)}`
+    });
     const data = await res.json();
 
     if (data.success) {
-        Swal.fire({
-            toast: true,
-            position: "top-end",
-            icon: "success",
-            title: "Value added",
-            showConfirmButton: false,
-            timer: 1600
-        });
-        setTimeout(() => location.reload(), 600);
+        Swal.fire({toast:true,position:'top-end',icon:'success',title:'Value added',showConfirmButton:false,timer:1400,background:'#141820',color:'#E8EAEF'});
+        setTimeout(() => location.reload(), 500);
     } else {
-        Swal.fire("Error", data.message || "Failed to add value", "error");
+        Swal.fire({icon:'error',title:'Error',text:data.message||'Failed to add value',background:'#141820',color:'#E8EAEF'});
     }
 });
 
-/* ---------- DELETE VALUE ---------- */
 function confirmDelete(id, name) {
     Swal.fire({
-        title: "{% trans 'Delete value?' %}",
-        text: `"${name}" will be removed permanently.`,
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#dc2626",
-        confirmButtonText: "{% trans 'Delete' %}",
-        cancelButtonText: "{% trans 'Cancel' %}"
-    }).then(async (result) => {
-        if (!result.isConfirmed) return;
-
-        const res = await fetch(
-            "{% url 'dashboard:variant_value_delete' %}",
-            {
-                method: "POST",
-                headers: {
-                    "X-CSRFToken": csrfToken,
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: "id=" + id
-            }
-        );
-
+        title:`Delete "${name}"?`, text:'This value will be permanently removed.',
+        icon:'warning', showCancelButton:true,
+        confirmButtonText:'Delete', cancelButtonText:'Cancel',
+        confirmButtonColor:'#F43F5E',
+        background:'#141820', color:'#E8EAEF', iconColor:'#F43F5E'
+    }).then(async r => {
+        if (!r.isConfirmed) return;
+        const res = await fetch("{% url 'dashboard:variant_value_delete' %}", {
+            method:'POST',
+            headers:{'X-CSRFToken':csrf,'Content-Type':'application/x-www-form-urlencoded'},
+            body:'id='+id
+        });
         const data = await res.json();
-
         if (data.success) {
-            Swal.fire({
-                toast: true,
-                position: "top-end",
-                icon: "success",
-                title: "Value deleted",
-                showConfirmButton: false,
-                timer: 1400
-            });
-            setTimeout(() => location.reload(), 600);
+            Swal.fire({toast:true,position:'top-end',icon:'success',title:'Deleted',showConfirmButton:false,timer:1200,background:'#141820',color:'#E8EAEF'});
+            setTimeout(() => location.reload(), 500);
         } else {
-            Swal.fire("Error", data.message || "Delete failed", "error");
+            Swal.fire({icon:'error',title:'Error',text:data.message||'Delete failed',background:'#141820',color:'#E8EAEF'});
         }
     });
 }
 </script>
+{% endblock %}
 
 {% endblock %}

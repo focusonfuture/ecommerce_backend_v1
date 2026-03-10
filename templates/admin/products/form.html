@@ -3,156 +3,260 @@
 {% load i18n %}
 {% load widget_tweaks %}
 
-{% block content %}
+{% block breadcrumb %}{% if form.instance.pk %}Edit Product{% else %}Create Product{% endif %}{% endblock %}
 
-<!-- ================= ANIMATIONS ================= -->
+{% block content %}
 <style>
-@keyframes fadeUp {
-    from { opacity: 0; transform: translateY(14px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-up {
-    animation: fadeUp .5s ease-out both;
-}
+    /* ── all colours/fonts inherit from base.html ── */
+
+    .f-section {
+        background:#141820; border:1px solid #1E2330; border-radius:18px;
+        padding:26px 28px; margin-bottom:18px;
+        opacity:0; animation:fadeUp .55s cubic-bezier(.16,1,.3,1) forwards;
+    }
+    .sec-label {
+        font-size:11px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase;
+        color:#4A5168; margin-bottom:20px;
+        display:flex; align-items:center; gap:10px;
+    }
+    .sec-label::after { content:''; flex:1; height:1px; background:#1E2330; }
+
+    .g2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media(max-width:768px){ .g2 { grid-template-columns:1fr; } }
+
+    .f-group { display:flex; flex-direction:column; gap:7px; }
+    .f-label { font-size:12px; font-weight:500; color:#8B92A8; letter-spacing:.3px; }
+
+    .f-input, .f-select, .f-textarea {
+        width:100%; background:#0D1017; border:1px solid #1E2330;
+        border-radius:12px; padding:12px 15px;
+        font-family:'DM Sans',sans-serif; font-size:14px; color:#E8EAEF; outline:none;
+        transition:border-color .2s,box-shadow .2s,background .2s;
+        -webkit-appearance:none;
+    }
+    .f-input::placeholder, .f-textarea::placeholder { color:#3A4157; }
+    .f-input:focus, .f-select:focus, .f-textarea:focus {
+        border-color:#4F6EF7; background:#111620;
+        box-shadow:0 0 0 4px rgba(79,110,247,.1);
+    }
+    .f-input.readonly { background:#0A0C10; color:#4A5168; cursor:not-allowed; border-color:#141820; }
+    .f-input.err { border-color:#F43F5E; box-shadow:0 0 0 4px rgba(244,63,94,.08); }
+    .f-err-msg { font-size:12px; color:#F43F5E; }
+    .f-textarea { min-height:108px; resize:vertical; }
+    .f-hint { font-size:11px; color:#4A5168; margin-top:4px; }
+
+    .f-select { padding-right:34px; cursor:pointer; }
+    .f-select option { background:#0D1017; color:#E8EAEF; }
+    .sel-wrap { position:relative; }
+    .sel-wrap::after { content:'▾'; position:absolute; right:13px; top:50%; transform:translateY(-50%); color:#4A5168; font-size:12px; pointer-events:none; }
+
+    /* multi-select */
+    .f-multiselect {
+        width:100%; background:#0D1017; border:1px solid #1E2330;
+        border-radius:12px; padding:8px;
+        font-family:'DM Sans',sans-serif; font-size:13px; color:#E8EAEF; outline:none;
+        min-height:100px; transition:border-color .2s,box-shadow .2s;
+    }
+    .f-multiselect:focus { border-color:#4F6EF7; box-shadow:0 0 0 4px rgba(79,110,247,.1); }
+    .f-multiselect option { background:#0D1017; padding:4px 8px; border-radius:6px; }
+    .f-multiselect option:checked { background:rgba(79,110,247,.2); color:#4F6EF7; }
+
+    /* toggles */
+    .tog-row { display:flex; flex-wrap:wrap; gap:12px; }
+    .tog-wrap {
+        display:flex; align-items:center; gap:14px;
+        background:#0D1017; border:1px solid #1E2330; border-radius:12px;
+        padding:13px 16px; cursor:pointer; transition:border-color .2s;
+        user-select:none; flex:1; min-width:160px;
+    }
+    .tog-wrap:hover { border-color:#252B3A; }
+    .tog-track { width:42px; height:24px; border-radius:12px; background:#1E2330; position:relative; transition:background .25s; flex-shrink:0; }
+    .tog-track.on { background:linear-gradient(135deg,#4F6EF7,#7C3AED); }
+    .tog-track .dot { position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:9px; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.4); transition:transform .25s cubic-bezier(.16,1,.3,1); }
+    .tog-track.on .dot { transform:translateX(18px); }
+    .tog-lbl { font-size:13px; font-weight:500; color:#C4C9D8; }
+    .tog-sub { font-size:11px; color:#4A5168; }
+
+    /* action bar */
+    .action-bar {
+        display:flex; gap:12px; align-items:center;
+        background:#141820; border:1px solid #1E2330; border-radius:18px; padding:20px 28px;
+        opacity:0; animation:fadeUp .55s cubic-bezier(.16,1,.3,1) .42s forwards;
+    }
+    .btn-save {
+        flex:1; height:50px; border:none; cursor:pointer; border-radius:12px;
+        background:linear-gradient(135deg,#4F6EF7,#7C3AED); color:#fff;
+        font-family:'Syne',sans-serif; font-size:14px; font-weight:700;
+        display:flex; align-items:center; justify-content:center; gap:8px;
+        box-shadow:0 6px 20px rgba(79,110,247,.25); transition:transform .25s,box-shadow .25s;
+        position:relative; overflow:hidden;
+    }
+    .btn-save::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,.1),transparent); opacity:0; transition:opacity .25s; }
+    .btn-save:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(79,110,247,.35); }
+    .btn-save:hover::before { opacity:1; }
+    .btn-cancel {
+        height:50px; padding:0 26px; border-radius:12px; text-decoration:none;
+        background:#0D1017; border:1px solid #1E2330; color:#8B92A8;
+        font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500;
+        display:inline-flex; align-items:center; gap:8px; transition:.2s;
+    }
+    .btn-cancel:hover { background:#141820; color:#E8EAEF; border-color:#252B3A; }
+
+    /* info banner (variants note) */
+    .info-banner {
+        display:flex; align-items:center; gap:12px;
+        background:rgba(79,110,247,.06); border:1px solid rgba(79,110,247,.18);
+        border-radius:12px; padding:13px 18px; margin-bottom:18px;
+        font-size:13px; color:#8B92A8;
+        opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .04s forwards;
+    }
+    .info-banner .ib-icon { font-size:18px; flex-shrink:0; }
+
+    /* page title */
+    .pg-header { display:flex; align-items:center; gap:14px; margin-bottom:22px; opacity:0; animation:fadeUp .5s cubic-bezier(.16,1,.3,1) 0s forwards; }
+    .pg-icon { width:46px; height:46px; border-radius:14px; font-size:20px; background:linear-gradient(135deg,rgba(79,110,247,.18),rgba(124,58,237,.1)); border:1px solid rgba(79,110,247,.25); display:flex; align-items:center; justify-content:center; }
+    .pg-title { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:#E8EAEF; letter-spacing:-.3px; }
+    .pg-sub { font-size:13px; color:#4A5168; margin-top:2px; }
 </style>
 
-<div class="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12 animate-fade-up">
+<div style="max-width:820px; margin:0 auto;">
 
-    <div class="w-full max-w-5xl">
-        <div class="bg-white rounded-3xl shadow-xl overflow-hidden">
-
-            <!-- ================= HEADER ================= -->
-            <div class="px-10 py-8 border-b bg-slate-50">
-                <h1 class="text-3xl font-semibold text-slate-800">
-                    {% if form.instance.pk %}
-                        {% trans "Edit Product" %}
-                    {% else %}
-                        {% trans "Create Product" %}
-                    {% endif %}
-                </h1>
-                <p class="text-slate-500 mt-1">
-                    {% trans "Define the product details (pricing is handled in variants)" %}
-                </p>
-            </div>
-
-            <!-- ================= FORM ================= -->
-            <div class="p-8 md:p-12">
-                <form method="post" class="space-y-8">
-                    {% csrf_token %}
-
-                    <!-- ===== NAME & SLUG ===== -->
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div>
-                            {{ form.name.label_tag }}
-                            {{ form.name|add_class:"w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-teal-300" }}
-                            {% if form.name.errors %}
-                                <p class="text-rose-600 text-sm mt-2">
-                                    {{ form.name.errors.0 }}
-                                </p>
-                            {% endif %}
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">
-                                {% trans "Slug" %}
-                            </label>
-                            <input type="text"
-                                   value="{{ form.instance.slug }}"
-                                   readonly
-                                   class="w-full px-4 py-3 rounded-xl bg-slate-100
-                                          border border-slate-200 text-slate-500
-                                          cursor-not-allowed">
-                        </div>
-                    </div>
-
-                    <!-- ===== CATEGORY & BRAND ===== -->
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div>
-                            {{ form.category.label_tag }}
-                            {{ form.category|add_class:"w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-teal-300" }}
-                        </div>
-
-                        <div>
-                            {{ form.brand.label_tag }}
-                            {{ form.brand|add_class:"w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-teal-300" }}
-                        </div>
-                    </div>
-
-                    <!-- ===== DESCRIPTIONS ===== -->
-                    <div>
-                        {{ form.short_description.label_tag }}
-                        {{ form.short_description|add_class:"w-full px-4 py-3 rounded-xl border border-slate-200" }}
-                    </div>
-
-                    <div>
-                        {{ form.description.label_tag }}
-                        {{ form.description|add_class:"w-full px-4 py-3 rounded-xl border border-slate-200 min-h-[140px]" }}
-                    </div>
-
-                    <!-- ===== SEO ===== -->
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div>
-                            {{ form.meta_title.label_tag }}
-                            {{ form.meta_title|add_class:"w-full px-4 py-3 rounded-xl border border-slate-200" }}
-                        </div>
-
-                        <div>
-                            {{ form.meta_description.label_tag }}
-                            {{ form.meta_description|add_class:"w-full px-4 py-3 rounded-xl border border-slate-200" }}
-                        </div>
-                    </div>
-
-                    <!-- ===== RELATED PRODUCTS ===== -->
-                    <div>
-                        {{ form.related_products.label_tag }}
-                        {{ form.related_products|add_class:"w-full px-4 py-3 rounded-xl border border-slate-200" }}
-                        <p class="text-xs text-slate-500 mt-1">
-                            {% trans "Optional cross-sell / up-sell products" %}
-                        </p>
-                    </div>
-
-                    <!-- ===== TOGGLES ===== -->
-                    <div class="flex flex-wrap gap-8 pt-4">
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            {{ form.is_active }}
-                            <span class="text-slate-700 font-medium">{% trans "Active" %}</span>
-                        </label>
-
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            {{ form.is_featured }}
-                            <span class="text-slate-700 font-medium">{% trans "Featured" %}</span>
-                        </label>
-                    </div>
-
-                    <!-- ===== ACTION BUTTONS ===== -->
-                    <div class="flex flex-col sm:flex-row gap-4 pt-10">
-
-                        <button type="submit"
-                                class="flex-1 py-4 rounded-xl
-                                       bg-teal-600 hover:bg-teal-700
-                                       text-white text-lg font-semibold
-                                       shadow-md transition-all
-                                       hover:-translate-y-0.5">
-                            {% if form.instance.pk %}
-                                {% trans "Update Product" %}
-                            {% else %}
-                                {% trans "Create Product" %}
-                            {% endif %}
-                        </button>
-
-                        <a href="{% url 'dashboard:product_list' %}"
-                           class="flex-1 py-4 rounded-xl
-                                  bg-slate-100 hover:bg-slate-200
-                                  text-slate-700 text-lg font-medium
-                                  text-center transition">
-                            {% trans "Cancel" %}
-                        </a>
-                    </div>
-
-                </form>
-            </div>
+    <!-- Page title -->
+    <div class="pg-header">
+        <div class="pg-icon">📦</div>
+        <div>
+            <div class="pg-title">{% if form.instance.pk %}Edit Product{% else %}Create Product{% endif %}</div>
+            <div class="pg-sub">{% if form.instance.pk %}Update product details{% else %}Add a new product to your catalogue{% endif %}</div>
         </div>
     </div>
+
+    <!-- Info note -->
+    <div class="info-banner">
+        <span class="ib-icon">💡</span>
+        <span>Pricing, stock and shipping are managed inside <strong style="color:#4F6EF7;">Variants</strong>. Create the product here first, then add variants.</span>
+    </div>
+
+    <form method="post" id="productForm">
+        {% csrf_token %}
+
+        <!-- ── Identity ───────────────────────────────── -->
+        <div class="f-section" style="animation-delay:.1s;">
+            <div class="sec-label">Product Identity</div>
+            <div class="g2" style="margin-bottom:16px;">
+                <div class="f-group">
+                    <label class="f-label">Product Name *</label>
+                    {{ form.name|add_class:"f-input"|attr:"placeholder:e.g. iPhone 15 Pro" }}
+                    {% if form.name.errors %}<span class="f-err-msg">{{ form.name.errors.0 }}</span>{% endif %}
+                </div>
+                <div class="f-group">
+                    <label class="f-label">Slug <span style="color:#4A5168;font-size:11px;">(auto-generated)</span></label>
+                    <input type="text" value="{{ form.instance.slug }}" readonly class="f-input readonly" placeholder="auto-generated">
+                </div>
+            </div>
+            <div class="g2">
+                <div class="f-group">
+                    <label class="f-label">Category *</label>
+                    <div class="sel-wrap">
+                        {{ form.category|add_class:"f-select" }}
+                    </div>
+                </div>
+                <div class="f-group">
+                    <label class="f-label">Brand</label>
+                    <div class="sel-wrap">
+                        {{ form.brand|add_class:"f-select" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Descriptions ───────────────────────────── -->
+        <div class="f-section" style="animation-delay:.17s;">
+            <div class="sec-label">Descriptions</div>
+            <div class="f-group" style="margin-bottom:16px;">
+                <label class="f-label">Short Description</label>
+                {{ form.short_description|add_class:"f-input"|attr:"placeholder:Brief one-liner shown in listings…" }}
+            </div>
+            <div class="f-group">
+                <label class="f-label">Full Description</label>
+                {{ form.description|add_class:"f-textarea"|attr:"placeholder:Detailed product description…" }}
+            </div>
+        </div>
+
+        <!-- ── SEO ────────────────────────────────────── -->
+        <div class="f-section" style="animation-delay:.24s;">
+            <div class="sec-label">SEO &amp; Meta</div>
+            <div class="g2">
+                <div class="f-group">
+                    <label class="f-label">Meta Title</label>
+                    {{ form.meta_title|add_class:"f-input"|attr:"placeholder:SEO title…" }}
+                </div>
+                <div class="f-group">
+                    <label class="f-label">Meta Description</label>
+                    {{ form.meta_description|add_class:"f-input"|attr:"placeholder:SEO description…" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Related Products ───────────────────────── -->
+        <div class="f-section" style="animation-delay:.31s;">
+            <div class="sec-label">Related Products</div>
+            <div class="f-group">
+                <label class="f-label">Cross-sell / Up-sell <span style="color:#4A5168;font-size:11px;">(optional · hold Ctrl/⌘ to select multiple)</span></label>
+                {{ form.related_products|add_class:"f-multiselect" }}
+                <span class="f-hint">These products will be shown as recommendations on the product page.</span>
+            </div>
+        </div>
+
+        <!-- ── Visibility ─────────────────────────────── -->
+        <div class="f-section" style="animation-delay:.38s;">
+            <div class="sec-label">Visibility &amp; Settings</div>
+            <div class="tog-row">
+                <label class="tog-wrap" id="activeWrap">
+                    {{ form.is_active }}
+                    <div class="tog-track {% if form.instance.is_active %}on{% endif %}" id="activeTrack"><div class="dot"></div></div>
+                    <div>
+                        <div class="tog-lbl">Active</div>
+                        <div class="tog-sub">Visible in catalogue</div>
+                    </div>
+                </label>
+                <label class="tog-wrap" id="featuredWrap">
+                    {{ form.is_featured }}
+                    <div class="tog-track {% if form.instance.is_featured %}on{% endif %}" id="featuredTrack"><div class="dot"></div></div>
+                    <div>
+                        <div class="tog-lbl">Featured</div>
+                        <div class="tog-sub">Shown in highlights</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- ── Action Bar ─────────────────────────────── -->
+        <div class="action-bar">
+            <a href="{% url 'dashboard:product_list' %}" class="btn-cancel">← Cancel</a>
+            <button type="submit" class="btn-save">
+                {% if form.instance.pk %}💾 Update Product{% else %}✚ Create Product{% endif %}
+            </button>
+        </div>
+    </form>
 </div>
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.style.display = 'none');
+
+    function bindToggle(name, trackId) {
+        const cb = document.querySelector(`input[name="${name}"]`);
+        const track = document.getElementById(trackId);
+        if (!cb || !track) return;
+        track.parentElement.addEventListener('click', e => {
+            e.preventDefault();
+            cb.checked = !cb.checked;
+            track.classList.toggle('on', cb.checked);
+        });
+    }
+    bindToggle('is_active', 'activeTrack');
+    bindToggle('is_featured', 'featuredTrack');
+</script>
+{% endblock %}
 
 {% endblock %}
